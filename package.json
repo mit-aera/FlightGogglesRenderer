@@ -1,0 +1,12 @@
+{
+    "name": "com.agiledrones.flightgoggles",
+    "description": "FlightGoggles is a framework for photorealistic hardware-in-the-loop agile flight simulation using Unity3D and ROS.",
+    "version": "2.0.0-preview",
+    "unity": "2018.3.0f2",
+    "displayName": "FlightGoggles Robot Framework",
+    "dependencies": {
+        "com.unity.postprocessing": "2.1.2",
+        "com.unity.render-pipelines.core": "5.3.0",
+        "com.unity.shadergraph": "5.3.0"
+    }
+}
