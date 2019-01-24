@@ -324,7 +324,7 @@ public class CameraController : MonoBehaviour
 
             // Initialize gameobjects if screen is ready to render.
             case 2:
-                disableColliders();
+                // disableColliders();
                 instantiateObjects();
                 instantiateCameras();
                 internal_state.initializationStep++;
@@ -556,8 +556,8 @@ public class CameraController : MonoBehaviour
     }
 
     void resizeScreen(){
-        // Set the max framerate
-        Application.targetFrameRate = state.maxFramerate*2;
+        // Set the max framerate to something very high
+        Application.targetFrameRate = 100000000;
         // initialize the display to a window that fits all cameras
         Screen.SetResolution(state.screenWidth, state.screenHeight, false);
         // Set render texture to the correct size
@@ -587,7 +587,13 @@ public class CameraController : MonoBehaviour
     }
 
     void instantiateCameras(){
-        // Initialize Camera objects.
+        // Disable cameras in scene
+        foreach (Camera c in FindObjectsOfType<Camera>())
+        {
+            c.enabled = false;
+        }
+
+        // Initialize new Camera objects.
         state.cameras.ToList().ForEach(
             obj_state =>
             {
@@ -668,8 +674,8 @@ public class CameraController : MonoBehaviour
 
 
         // Compress and send the image in a different thread.
-        Task.Run(() =>
-        {
+        //Task.Run(() =>
+        //{
             // Get metadata
             RenderMetadata_t metadata = new RenderMetadata_t(state);
 
@@ -687,11 +693,11 @@ public class CameraController : MonoBehaviour
             //Debug.Log(images.Count);
 
             // Send the message.
-            lock (socket_lock)
-            {
+            //lock (socket_lock)
+            //{
                 push_socket.TrySendMultipartMessage(msg);
-            }
-        });
+            //}
+        //});
     }
 
     /* ==================================
