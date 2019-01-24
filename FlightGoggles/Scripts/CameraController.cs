@@ -11,7 +11,7 @@
 // To allow for OBJ file import, you must download and include the TriLib Library
 // into this project folder. Once the TriLib library has been included, you can enable
 // OBJ importing by commenting out the following line.
-//#define TRILIB_DOES_NOT_EXIST
+#define TRILIB_DOES_NOT_EXIST
 
 using System;
 using System.Collections;
@@ -34,7 +34,7 @@ using Newtonsoft.Json;
 using MessageSpec;
 
 // Include postprocessing
-using UnityEngine.PostProcessing;
+//using UnityEngine.PostProcessing;
 
 // TriLib dynamic model loader.
 #if !TRILIB_DOES_NOT_EXIST
@@ -372,13 +372,17 @@ public class CameraController : MonoBehaviour
 
 
                 // Copy and save postProcessingProfile into internal_object_state.
+                /*
                 var postBehaviour = obj.GetComponent<PostProcessingBehaviour>();
                 internal_object_state.postProcessingProfile = Instantiate(postBehaviour.profile);
                 postBehaviour.profile = internal_object_state.postProcessingProfile;
+                */
 
+                /*
                 // Enable depth if needed.
                 if (obj_state.isDepth)
                 {
+                    
                     var debugSettings = internal_object_state.postProcessingProfile.debugViews.settings;
 
                     debugSettings.mode = BuiltinDebugViewsModel.Mode.Depth;
@@ -397,7 +401,10 @@ public class CameraController : MonoBehaviour
                         // If CTAA is not installed on camera, fallback to PostProcessing FXAA.
                         internal_object_state.postProcessingProfile.antialiasing.enabled = false;
                     }
-                } else
+                    
+            } else */
+
+                /*
                 {
                     // Set CTAA settings
                     CTAA_PC AA = obj.GetComponent<CTAA_PC>();
@@ -434,7 +441,7 @@ public class CameraController : MonoBehaviour
                     // Save the settings.
                     internal_object_state.postProcessingProfile.colorGrading.settings = colorGradingSettings;
 
-                }
+                }*/
             });
         // 
 
@@ -480,6 +487,7 @@ public class CameraController : MonoBehaviour
                     ObjectState_t internal_object_state = internal_state.getWrapperObject(obj_state.ID, camera_template);
                     GameObject obj = internal_object_state.gameObj;
 
+                    /*
                     // Scale depth.
                     if (internal_object_state.postProcessingProfile.debugViews.settings.depth.scale != state.camDepthScale)
                     {
@@ -488,6 +496,7 @@ public class CameraController : MonoBehaviour
                         debugSettings.depth.scale = state.camDepthScale;
                         internal_object_state.postProcessingProfile.debugViews.settings = debugSettings;
                     }
+                    */
                 
                 }
             );

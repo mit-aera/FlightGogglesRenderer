@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PostProcessing;
+//using UnityEngine.PostProcessing;
 
 //[RequireComponent(typeof(PostProcessingBehaviour))]
 
@@ -88,7 +88,7 @@ namespace MessageSpec
         public bool initialized { get; set; } = false;
         public GameObject gameObj { get; set; }
         public GameObject template { get; set; }
-        public PostProcessingProfile postProcessingProfile { get; set; }
+        // public PostProcessingProfile postProcessingProfile { get; set; }
         // Constructor
         public ObjectState_t(GameObject template)
         {
