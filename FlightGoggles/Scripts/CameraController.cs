@@ -270,6 +270,11 @@ public class CameraController : MonoBehaviour
             // Update position of game objects.
             updateObjectPositions();
 
+            // Do collision detection
+            updateCameraCollisions();
+            // Run landmark visibility checks
+            //updateLandmarkVisibility();
+
             // Mark socket as initialized
             socket_initialized = true;
 
@@ -324,7 +329,6 @@ public class CameraController : MonoBehaviour
 
             // Initialize gameobjects if screen is ready to render.
             case 2:
-                // disableColliders();
                 instantiateObjects();
                 instantiateCameras();
                 internal_state.initializationStep++;
@@ -346,6 +350,7 @@ public class CameraController : MonoBehaviour
 
             case 4:
                 setCameraPostProcessSettings();
+                enableColliders();
                 // Set initialization to -1 to indicate that we're done initializing.
                 internal_state.initializationStep=-1;
                 // Takes one frame to take effect.
@@ -504,6 +509,29 @@ public class CameraController : MonoBehaviour
 
     }
 
+    void updateCameraCollisions()
+    {
+        if (internal_state.readyToRender)
+        {
+            state.hasCameraCollision = false;
+            state.cameras.Where(obj => obj.hasCollisionCheck).ToList().ForEach(
+            obj_state =>
+            {
+                // Get object
+                ObjectState_t internal_object_state = internal_state.getWrapperObject(obj_state.ID, camera_template);
+                GameObject obj = internal_object_state.gameObj;
+                // Check if object has collided (requires that collider hook has been setup on object previously.)
+                state.hasCameraCollision = (state.hasCameraCollision || obj.GetComponent<collisionHandler>().hasCollided);
+            }
+        );
+        }
+    }
+
+    void updateLandmarkVisibility()
+    {
+
+    }
+
     /* =============================================
      * FlightGoggles Initialization Functions 
      * =============================================
@@ -564,11 +592,11 @@ public class CameraController : MonoBehaviour
         rendered_frame = new Texture2D(state.screenWidth, state.screenHeight, TextureFormat.RGB24, false, true);
     }
 
-    void disableColliders(){
+    void enableColliders(){
         // Disable object colliders in scene
         foreach(Collider c in FindObjectsOfType<Collider>())
         {
-            c.enabled = false;
+            c.enabled = true;
         }
     }
 
@@ -602,8 +630,12 @@ public class CameraController : MonoBehaviour
                 GameObject obj = internal_object_state.gameObj;
                 // Ensure FOV is set for camera.
                 obj.GetComponent<Camera>().fieldOfView = state.camFOV;
+
+                // Apply translation and rotation
+                obj.transform.SetPositionAndRotation(ListToVector3(obj_state.position), ListToQuaternion(obj_state.rotation));
             }
         );
+
     }
 
     void setCameraViewports(){
