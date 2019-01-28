@@ -279,7 +279,7 @@ PrefabInstance:
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
       propertyPath: flight_goggles_version
-      value: v1.8.0-a1
+      value: v1.8.0-a2
       objectReference: {fileID: 0}
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
