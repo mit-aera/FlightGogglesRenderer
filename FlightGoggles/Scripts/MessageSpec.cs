@@ -25,6 +25,9 @@ namespace MessageSpec
         // Initialization status
         public int initializationStep { get; set; } = 0;
         public int screenSkipFrames { get; set; } = 0;
+
+        // List of landmark objects in the environment
+        public IList<GameObject> landmarkObjects;
         
         // Convenience getter function.
         public bool initialized { get { return (initializationStep < 0); } }
@@ -124,7 +127,7 @@ namespace MessageSpec
 
         // Private state members used by Unity3d.
         public bool hasCameraCollision { get; set; } = false;
-        public IList<int> landmarksInView { get; set; } = new List<int>(); // Must be initialized or will segfault.
+        public IList<Landmark_t> landmarksInView { get; set; } = new List<Landmark_t>(); // Must be initialized or will segfault.
 
 
         // Additional getters (for convenience)
@@ -148,7 +151,7 @@ namespace MessageSpec
 
         // Should this camera do collision or landmark visibility checks?
         public bool hasCollisionCheck { get; set; }
-        public bool doesLandmakrVisCheck { get; set; }
+        public bool doesLandmarkVisCheck { get; set; }
 
         // Additional getters
         public bool isGrayscale { get { return (channels == 1) && (!isDepth); } }
@@ -192,7 +195,7 @@ namespace MessageSpec
         public IList<int> channels { get; set; }
         
         public bool hasCameraCollision { get; set; }
-        public IList<int> landmarksInView { get; set; }
+        public IList<Landmark_t> landmarksInView { get; set; }
 
         public RenderMetadata_t(StateMessage_t state)
         {

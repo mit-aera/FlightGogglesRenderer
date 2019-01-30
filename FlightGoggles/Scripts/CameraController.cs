@@ -58,10 +58,12 @@ public class CameraController : MonoBehaviour
     public const string client_ip_pref_key = "client_ip";
     [HideInInspector]
     public const int connection_timeout_seconds = 2;
+    [HideInInspector]
+    public string flight_goggles_version = "";
 
     // Public Parameters
     public string client_ip = client_ip_default;
-    public string flight_goggles_version = "v1.4.6";
+    
     public bool DEBUG = false;
     public GameObject camera_template;
     public GameObject splashScreen;
@@ -94,6 +96,9 @@ public class CameraController : MonoBehaviour
     {
         // Make sure that this gameobject survives across scene reloads
         DontDestroyOnLoad(this.gameObject);
+
+        // Get application version
+        flight_goggles_version = Application.version;
 
         // Fixes for Unity/NetMQ conflict stupidity.
         AsyncIO.ForceDotNet.Force();
@@ -175,12 +180,14 @@ public class CameraController : MonoBehaviour
         // Configure sockets
         Debug.Log("Configuring sockets.");
         pull_socket = new NetMQ.Sockets.SubscriberSocket();
-        pull_socket.Options.ReceiveHighWatermark = 90;
+        pull_socket.Options.ReceiveHighWatermark = 6;
 
         // Setup subscriptions.
         pull_socket.Subscribe("Pose");
         push_socket = new NetMQ.Sockets.PublisherSocket();
         push_socket.Options.Linger = TimeSpan.Zero; // Do not keep unsent messages on hangup.
+        push_socket.Options.SendHighWatermark = 6; // Do not queue many images.
+       
     }
 
     public void ConnectToClient(string inputIPString)
@@ -350,7 +357,7 @@ public class CameraController : MonoBehaviour
 
             case 4:
                 setCameraPostProcessSettings();
-                enableColliders();
+                enableCollidersAndLandmarks();
                 // Set initialization to -1 to indicate that we're done initializing.
                 internal_state.initializationStep=-1;
                 // Takes one frame to take effect.
@@ -529,7 +536,13 @@ public class CameraController : MonoBehaviour
 
     void updateLandmarkVisibility()
     {
+        // Cull landmarks based on camera frustrum
 
+        // Batch raytrace from landmarks to camera
+
+        // Cull based on number of collisions
+
+        // 
     }
 
     /* =============================================
@@ -592,12 +605,14 @@ public class CameraController : MonoBehaviour
         rendered_frame = new Texture2D(state.screenWidth, state.screenHeight, TextureFormat.RGB24, false, true);
     }
 
-    void enableColliders(){
-        // Disable object colliders in scene
+    void enableCollidersAndLandmarks(){
+        // Enable object colliders in scene
         foreach(Collider c in FindObjectsOfType<Collider>())
         {
             c.enabled = true;
         }
+
+        // Find all landmarks in scene
     }
 
     void instantiateObjects(){
