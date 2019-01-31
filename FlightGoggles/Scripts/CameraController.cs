@@ -32,6 +32,8 @@ using Newtonsoft.Json;
 
 // Include message types
 using MessageSpec;
+using Unity.Collections;
+using Unity.Jobs;
 
 // Include postprocessing
 //using UnityEngine.PostProcessing;
@@ -537,61 +539,77 @@ public class CameraController : MonoBehaviour
 
     void updateLandmarkVisibility()
     {
-
-        // Erase old set of landmarks
-        state.landmarksInView = new IList<Landmark_t>();
-
-        // Get camera to cast from
-        ObjectState_t internal_object_state = internal_state.getWrapperObject(state.cameras[0].ID, camera_template);
-        Camera castingCamera = internal_object_state.gameObj.GetComponent<Camera>();
-        Vector3 cameraPosition = internal_object_state.gameObj.Transform.position;
-            
-        // Cull landmarks based on camera frustrum
-        // Gives lookup table of screen positions.
-        Dictionary<string, Vector3> visibleLandmarkScreenPositions();
-
-        foreach (KeyValuePair<string, GameObject> entry in landmarkObjects){
-            Vector3 screenPoint = castingCamera.WorldToViewportPoint(entry.Value.Transform.position);
-            bool visible = screenPoint.z > 0 && screenPoint.x > 0 && screenPoint.x < 1 && screenPoint.y > 0 && screenPoint.y < 1;
-            if (visible) {
-                visibleLandmarkScreenPositions.Add(entry.Key, screenPoint);
-            }
-        }
-
-    
-        int numLandmarksInView = visibleLandmarkScreenPositions.Count();
-
-        // Batch raytrace from landmarks to camera
-        var results = new NativeArray<RaycastHit>(numLandmarksInView, Allocator.Temp);
-        var commands = new NativeArray<RaycastCommand>(numLandmarksInView.length, Allocator.Temp);
-
-        int i = 0;
-        var visibleLandmarkList = visibleLandmarkScreenPositions.OrderBy(kvp => kvp.Key);
-        foreach (var landmarkObj in visibleLandmarkList)
+        if (internal_state.readyToRender)
         {
-            Vector3 origin = landmarkObj.Value.Transform.position;
-            Vector3 direction = cameraPosition - origin;
 
-            commands[i] = new RaycastCommand(landmarkObj.Value.Transform.position, distance = direction.magnitude, maxHits = max_num_ray_collisions);
-            i++;
-        }
+            // Erase old set of landmarks
+            state.landmarksInView = new List<Landmark_t>();
 
-        // Run the raytrace commands
-        JobHandle handle = RaycastCommand.ScheduleBatch(commands, results, 1, default(JobHandle));
-        // Wait for the batch processing job to complete.
-        // @TODO: Move to end of frame.
-        handle.Complete();
+            // Get camera to cast from
+            ObjectState_t internal_object_state = internal_state.getWrapperObject(state.cameras[0].ID, camera_template);
+            Camera castingCamera = internal_object_state.gameObj.GetComponent<Camera>();
+            Vector3 cameraPosition = internal_object_state.gameObj.transform.position;
 
-        // Cull based on number of collisions
-        // Remove if it collided with something
-        for (int i = 0; i < numLandmarksInView; i++){
-            // Check collisions. NOTE: indexing is via N*max_hits with first null being end of hit list.
-            RaycastHit batchedHit = results[i];
-            if (batchedHit == null){
-                // No collisions here. Add it to the current state.
-                state.landmarksInView.Add(visibleLandmarkList[i]);
-                
+            // Cull landmarks based on camera frustrum
+            // Gives lookup table of screen positions.
+            Dictionary<string, Vector3> visibleLandmarkScreenPositions = new Dictionary<string, Vector3>();
+
+            foreach (KeyValuePair<string, GameObject> entry in internal_state.landmarkObjects)
+            {
+                Vector3 screenPoint = castingCamera.WorldToViewportPoint(entry.Value.transform.position);
+                bool visible = screenPoint.z > 0 && screenPoint.x > 0 && screenPoint.x < 1 && screenPoint.y > 0 && screenPoint.y < 1;
+                if (visible)
+                {
+                    visibleLandmarkScreenPositions.Add(entry.Key, screenPoint);
+                }
             }
+
+
+            int numLandmarksInView = visibleLandmarkScreenPositions.Count();
+
+            // Batch raytrace from landmarks to camera
+            var results = new NativeArray<RaycastHit>(numLandmarksInView, Allocator.TempJob);
+            var commands = new NativeArray<RaycastCommand>(numLandmarksInView, Allocator.TempJob);
+
+            int i = 0;
+            var visibleLandmarkScreenPosList = visibleLandmarkScreenPositions.OrderBy(kvp => kvp.Key).ToArray();
+            foreach (var elm in visibleLandmarkScreenPosList)
+            {
+                var landmark = internal_state.landmarkObjects[elm.Key];
+                Vector3 origin = landmark.transform.position;
+                Vector3 direction = cameraPosition - origin;
+
+                commands[i] = new RaycastCommand(origin, direction, distance: direction.magnitude, maxHits: max_num_ray_collisions);
+                i++;
+            }
+
+            // Run the raytrace commands
+            JobHandle handle = RaycastCommand.ScheduleBatch(commands, results, 1, default(JobHandle));
+            // Wait for the batch processing job to complete.
+            // @TODO: Move to end of frame.
+            handle.Complete();
+
+            // Cull based on number of collisions
+            // Remove if it collided with something
+            for (int j = 0; j < numLandmarksInView; j++)
+            {
+                // Check collisions. NOTE: indexing is via N*max_hits with first null being end of hit list.
+                RaycastHit batchedHit = results[j];
+                if (batchedHit.collider != null)
+                {
+                    // No collisions here. Add it to the current state.
+                    var landmark = visibleLandmarkScreenPosList[j];
+                    Landmark_t landmarkScreenPosObject = new Landmark_t();
+
+                    landmarkScreenPosObject.ID = landmark.Key;
+                    landmarkScreenPosObject.position = Vector3ToList(landmark.Value);
+                    state.landmarksInView.Add(landmarkScreenPosObject);
+
+                }
+            }
+
+            results.Dispose();
+            commands.Dispose();
         }
     }
 
@@ -656,6 +674,8 @@ public class CameraController : MonoBehaviour
     }
 
     void enableCollidersAndLandmarks(){
+        internal_state.landmarkObjects = new Dictionary<string, GameObject>();
+
         // Enable object colliders in scene
         foreach(Collider c in FindObjectsOfType<Collider>())
         {
@@ -668,7 +688,13 @@ public class CameraController : MonoBehaviour
             string gateName = obj.transform.parent.parent.name;
             string landmarkID = gateName + "_" + obj.name;
             // Save for later use
-            internal_state.landmarkObjects.Add(landmarkID, obj);
+            try
+            {
+                internal_state.landmarkObjects.Add(landmarkID, obj);
+            } catch (ArgumentException)
+            {
+                Debug.LogWarning("Landmark ID " + landmarkID + " already exists!");
+            }
         }
     }
 
@@ -827,5 +853,8 @@ public class CameraController : MonoBehaviour
     public static Vector3 ListToVector3(IList<float> list) { return new Vector3(list[0], list[1], list[2]); }
     public static Quaternion ListToQuaternion(IList<float> list) { return new Quaternion(list[0], list[1], list[2], list[3]); }
     public static Color ListHSVToColor(IList<float> list) { return Color.HSVToRGB(list[0], list[1], list[2]); }
+
+    // Helper functions for converting  vector -> list
+    public static List<float> Vector3ToList(Vector3 vec) { return new List<float>(new float[] { vec[0], vec[1], vec[2] }); }
 
 }

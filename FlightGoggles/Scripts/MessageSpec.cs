@@ -121,7 +121,7 @@ namespace MessageSpec
         // Object state update
         public IList<Camera_t> cameras { get; set; }
         public IList<Object_t> objects { get; set; }
-        public IList<Landmark_t> landmarksInView { get; set; } = new IList<Landmark_t>(); // Must be initialized or will segfault.
+        public IList<Landmark_t> landmarksInView { get; set; } = new List<Landmark_t>(); // Must be initialized or will segfault.
 
 
         // Private state members used by Unity3d.
@@ -170,7 +170,7 @@ namespace MessageSpec
     // Generic landmark point class for visibility checks
     public class Landmark_t
     {
-        public int ID { get; set; }
+        public string ID { get; set; }
         public IList<float> position { get; set; }
     }
 
