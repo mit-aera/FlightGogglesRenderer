@@ -595,7 +595,8 @@ public class CameraController : MonoBehaviour
             {
                 // Check collisions. NOTE: indexing is via N*max_hits with first null being end of hit list.
                 RaycastHit batchedHit = results[j];
-                if (batchedHit.collider != null)
+                if (batchedHit.collider == null)
+                //if (true)
                 {
                     // No collisions here. Add it to the current state.
                     var landmark = visibleLandmarkScreenPosList[j];
