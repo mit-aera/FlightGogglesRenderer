@@ -63,6 +63,7 @@ public class CameraController : MonoBehaviour
 
     // Public Parameters
     public string client_ip = client_ip_default;
+    public int max_num_ray_collisions = 1;
     
     public bool DEBUG = false;
     public GameObject camera_template;
@@ -280,7 +281,7 @@ public class CameraController : MonoBehaviour
             // Do collision detection
             updateCameraCollisions();
             // Run landmark visibility checks
-            //updateLandmarkVisibility();
+            updateLandmarkVisibility();
 
             // Mark socket as initialized
             socket_initialized = true;
@@ -536,13 +537,62 @@ public class CameraController : MonoBehaviour
 
     void updateLandmarkVisibility()
     {
+
+        // Erase old set of landmarks
+        state.landmarksInView = new IList<Landmark_t>();
+
+        // Get camera to cast from
+        ObjectState_t internal_object_state = internal_state.getWrapperObject(state.cameras[0].ID, camera_template);
+        Camera castingCamera = internal_object_state.gameObj.GetComponent<Camera>();
+        Vector3 cameraPosition = internal_object_state.gameObj.Transform.position;
+            
         // Cull landmarks based on camera frustrum
+        // Gives lookup table of screen positions.
+        Dictionary<string, Vector3> visibleLandmarkScreenPositions();
+
+        foreach (KeyValuePair<string, GameObject> entry in landmarkObjects){
+            Vector3 screenPoint = castingCamera.WorldToViewportPoint(entry.Value.Transform.position);
+            bool visible = screenPoint.z > 0 && screenPoint.x > 0 && screenPoint.x < 1 && screenPoint.y > 0 && screenPoint.y < 1;
+            if (visible) {
+                visibleLandmarkScreenPositions.Add(entry.Key, screenPoint);
+            }
+        }
+
+    
+        int numLandmarksInView = visibleLandmarkScreenPositions.Count();
 
         // Batch raytrace from landmarks to camera
+        var results = new NativeArray<RaycastHit>(numLandmarksInView, Allocator.Temp);
+        var commands = new NativeArray<RaycastCommand>(numLandmarksInView.length, Allocator.Temp);
+
+        int i = 0;
+        var visibleLandmarkList = visibleLandmarkScreenPositions.OrderBy(kvp => kvp.Key);
+        foreach (var landmarkObj in visibleLandmarkList)
+        {
+            Vector3 origin = landmarkObj.Value.Transform.position;
+            Vector3 direction = cameraPosition - origin;
+
+            commands[i] = new RaycastCommand(landmarkObj.Value.Transform.position, distance = direction.magnitude, maxHits = max_num_ray_collisions);
+            i++;
+        }
+
+        // Run the raytrace commands
+        JobHandle handle = RaycastCommand.ScheduleBatch(commands, results, 1, default(JobHandle));
+        // Wait for the batch processing job to complete.
+        // @TODO: Move to end of frame.
+        handle.Complete();
 
         // Cull based on number of collisions
-
-        // 
+        // Remove if it collided with something
+        for (int i = 0; i < numLandmarksInView; i++){
+            // Check collisions. NOTE: indexing is via N*max_hits with first null being end of hit list.
+            RaycastHit batchedHit = results[i];
+            if (batchedHit == null){
+                // No collisions here. Add it to the current state.
+                state.landmarksInView.Add(visibleLandmarkList[i]);
+                
+            }
+        }
     }
 
     /* =============================================
@@ -613,6 +663,13 @@ public class CameraController : MonoBehaviour
         }
 
         // Find all landmarks in scene
+        foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers")){
+            // Tag the landmarks
+            string gateName = obj.transform.parent.parent.name;
+            string landmarkID = gateName + "_" + obj.name;
+            // Save for later use
+            internal_state.landmarkObjects.Add(landmarkID, obj);
+        }
     }
 
     void instantiateObjects(){
@@ -701,11 +758,11 @@ public class CameraController : MonoBehaviour
         
         // Create a copy of the array
         int px_stride = 4 - cam.channels;
-        Parallel.For(0, num_bytes_to_copy, i =>
+        for (int i = 0; i < num_bytes_to_copy; i++)
         {
             output[i] = raw[byte_start + i*px_stride];
 
-        });
+        }
         
 
         return output;

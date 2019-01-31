@@ -27,7 +27,8 @@ namespace MessageSpec
         public int screenSkipFrames { get; set; } = 0;
 
         // List of landmark objects in the environment
-        public IList<GameObject> landmarkObjects;
+        public Dictionary<string, GameObject> landmarkObjects;
+        
         
         // Convenience getter function.
         public bool initialized { get { return (initializationStep < 0); } }
@@ -117,17 +118,14 @@ namespace MessageSpec
         public float camFOV   { get; set; }
         public float camDepthScale { get; set; }
         
-        // Additional metadata that will be passed through the render process.
-        //public Dictionary<string, string> additionalMetadata { get; set; }
         // Object state update
         public IList<Camera_t> cameras { get; set; }
         public IList<Object_t> objects { get; set; }
-        public IList<Landmark_t> landmarks { get; set; }
+        public IList<Landmark_t> landmarksInView { get; set; } = new IList<Landmark_t>(); // Must be initialized or will segfault.
 
 
         // Private state members used by Unity3d.
         public bool hasCameraCollision { get; set; } = false;
-        public IList<Landmark_t> landmarksInView { get; set; } = new List<Landmark_t>(); // Must be initialized or will segfault.
 
 
         // Additional getters (for convenience)
