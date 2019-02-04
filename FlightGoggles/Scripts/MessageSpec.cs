@@ -119,9 +119,9 @@ namespace MessageSpec
         public float camDepthScale { get; set; }
         
         // Object state update
-        public IList<Camera_t> cameras { get; set; }
-        public IList<Object_t> objects { get; set; }
-        public IList<Landmark_t> landmarksInView { get; set; } = new List<Landmark_t>(); // Must be initialized or will segfault.
+        public List<Camera_t> cameras { get; set; }
+        public List<Object_t> objects { get; set; }
+        public List<Landmark_t> landmarksInView { get; set; } = new List<Landmark_t>(); // Must be initialized or will segfault.
 
 
         // Private state members used by Unity3d.
@@ -140,8 +140,8 @@ namespace MessageSpec
     public class Camera_t
     {
         public string ID { get; set; }
-        public IList<float> position { get; set; }
-        public IList<float> rotation { get; set; }
+        public List<float> position { get; set; }
+        public List<float> rotation { get; set; }
         // Metadata
         public int channels { get; set; }
         public bool isDepth { get; set; }
@@ -161,17 +161,17 @@ namespace MessageSpec
     {
         public string prefabID { get; set; }
         public string ID { get; set; } // The instance ID
-        public IList<float> position { get; set; }
-        public IList<float> rotation { get; set; }
+        public List<float> position { get; set; }
+        public List<float> rotation { get; set; }
         // Metadata
-        public IList<float> size { get; set; }
+        public List<float> size { get; set; }
     }
 
     // Generic landmark point class for visibility checks
     public class Landmark_t
     {
         public string ID { get; set; }
-        public IList<float> position { get; set; }
+        public List<float> position { get; set; }
     }
 
 
@@ -189,11 +189,11 @@ namespace MessageSpec
         public float camDepthScale { get; set; }
         
         // Additional metadata for helping with the deserialization process.
-        public IList<string> cameraIDs { get; set; }
-        public IList<int> channels { get; set; }
+        public List<string> cameraIDs { get; set; }
+        public List<int> channels { get; set; }
         
         public bool hasCameraCollision { get; set; }
-        public IList<Landmark_t> landmarksInView { get; set; }
+        public List<Landmark_t> landmarksInView { get; set; }
 
         public RenderMetadata_t(StateMessage_t state)
         {

@@ -21,6 +21,9 @@ using UnityEngine.UI;
 using System.Threading;
 using System.Threading.Tasks;
 
+// Allow for fast & unsafe operations
+using Unity.Collections.LowLevel.Unsafe;
+
 // Array ops
 using System.Linq;
 
@@ -378,7 +381,7 @@ public class CameraController : MonoBehaviour
     void setCameraPostProcessSettings()
     {
 
-        state.cameras.ToList().ForEach(
+        state.cameras.ForEach(
             obj_state =>
             {
                 // Get object
@@ -495,26 +498,24 @@ public class CameraController : MonoBehaviour
         if (internal_state.readyToRender)
         {
             // Update depth cameras with dynamic depth scale.
-            state.cameras.Where(obj => obj.isDepth).ToList().ForEach(
-                obj_state =>
-                {
-                    // Get object
-                    ObjectState_t internal_object_state = internal_state.getWrapperObject(obj_state.ID, camera_template);
-                    GameObject obj = internal_object_state.gameObj;
+            var depthCameras = state.cameras.Where(obj => obj.isDepth);
+            foreach (var objState in depthCameras) {
+                // Get object
+                ObjectState_t internal_object_state = internal_state.getWrapperObject(objState.ID, camera_template);
+                GameObject obj = internal_object_state.gameObj;
 
-                    /*
-                    // Scale depth.
-                    if (internal_object_state.postProcessingProfile.debugViews.settings.depth.scale != state.camDepthScale)
-                    {
-                        var debugSettings = internal_object_state.postProcessingProfile.debugViews.settings;
-                        debugSettings.mode = BuiltinDebugViewsModel.Mode.Depth;
-                        debugSettings.depth.scale = state.camDepthScale;
-                        internal_object_state.postProcessingProfile.debugViews.settings = debugSettings;
-                    }
-                    */
-                
+                /*
+                // Scale depth.
+                if (internal_object_state.postProcessingProfile.debugViews.settings.depth.scale != state.camDepthScale)
+                {
+                    var debugSettings = internal_object_state.postProcessingProfile.debugViews.settings;
+                    debugSettings.mode = BuiltinDebugViewsModel.Mode.Depth;
+                    debugSettings.depth.scale = state.camDepthScale;
+                    internal_object_state.postProcessingProfile.debugViews.settings = debugSettings;
                 }
-            );
+                */
+
+            }
         }
 
     }
@@ -524,16 +525,14 @@ public class CameraController : MonoBehaviour
         if (internal_state.readyToRender)
         {
             state.hasCameraCollision = false;
-            state.cameras.Where(obj => obj.hasCollisionCheck).ToList().ForEach(
-            obj_state =>
-            {
+            var raycastingCameras = state.cameras.Where(obj => obj.hasCollisionCheck);
+            foreach (var obj_state in raycastingCameras) {
                 // Get object
                 ObjectState_t internal_object_state = internal_state.getWrapperObject(obj_state.ID, camera_template);
                 GameObject obj = internal_object_state.gameObj;
                 // Check if object has collided (requires that collider hook has been setup on object previously.)
                 state.hasCameraCollision = (state.hasCameraCollision || obj.GetComponent<collisionHandler>().hasCollided);
             }
-        );
         }
     }
 
@@ -701,7 +700,7 @@ public class CameraController : MonoBehaviour
 
     void instantiateObjects(){
         // Initialize additional objects
-        state.objects.ToList().ForEach(
+        state.objects.ForEach(
             obj_state =>
             {
                 // Get object
@@ -721,7 +720,7 @@ public class CameraController : MonoBehaviour
         }
 
         // Initialize new Camera objects.
-        state.cameras.ToList().ForEach(
+        state.cameras.ForEach(
             obj_state =>
             {
                 // Get object
@@ -739,7 +738,7 @@ public class CameraController : MonoBehaviour
 
     void setCameraViewports(){
         // Resize camera viewports.
-        state.cameras.ToList().ForEach(
+        state.cameras.ForEach(
             obj_state =>
             {
                 // Get object
@@ -759,76 +758,173 @@ public class CameraController : MonoBehaviour
      * ==================================
      */
 
-
+    // Old version with managed memory
     // Cut image block for an individual camera from larger provided image.
-    public byte[] get_raw_image(Camera_t cam, byte[] raw, int numCams)
-    {
+    //public byte[] get_raw_image(Camera_t cam, byte[] raw, int numCams)
+    //{
 
 
-        int num_bytes_to_copy = cam.channels * state.camWidth * state.camHeight;
-        //Debug.Log(cam.channels);
-        //int num_bytes_to_copy = 3 * state.camWidth * state.camHeight;
+    //    int num_bytes_to_copy = cam.channels * state.camWidth * state.camHeight;
+    //    //Debug.Log(cam.channels);
+    //    //int num_bytes_to_copy = 3 * state.camWidth * state.camHeight;
 
-        byte[] output = new byte[num_bytes_to_copy];
+    //    byte[] output = new byte[num_bytes_to_copy];
 
-        // Reverse camera indexing since the camera output is globally flipped on the Y axis.
-        int outputIndex = numCams - 1 - cam.outputIndex;
+    //    // Reverse camera indexing since the camera output is globally flipped on the Y axis.
+    //    int outputIndex = numCams - 1 - cam.outputIndex;
 
-        // Figure out where camera data starts and ends
-        int y_start = outputIndex * state.camHeight;
-        int y_end = (outputIndex+1) * state.camHeight;
+    //    // Figure out where camera data starts and ends
+    //    int y_start = outputIndex * state.camHeight;
+    //    int y_end = (outputIndex+1) * state.camHeight;
         
-        // Calculate start and end byte
-        int byte_start = (y_start * state.screenWidth) * 3;
-        int byte_end = (y_end * state.screenWidth) * 3;
+    //    // Calculate start and end byte
+    //    int byte_start = (y_start * state.screenWidth) * 3;
+    //    int byte_end = (y_end * state.screenWidth) * 3;
 
         
-        // Create a copy of the array
-        int px_stride = 4 - cam.channels;
-        for (int i = 0; i < num_bytes_to_copy; i++)
-        {
-            output[i] = raw[byte_start + i*px_stride];
+    //    // Create a copy of the array
+    //    int px_stride = 4 - cam.channels;
+    //    for (int i = 0; i < num_bytes_to_copy; i++)
+    //    {
+    //        output[i] = raw[byte_start + i*px_stride];
 
-        }
+    //    }
         
 
-        return output;
-    }
+    //    return output;
+    //}
+
+    //public struct ConvertRGBAToRGB : IJobParallelFor
+    //{
+    //    [ReadOnly]
+    //    public NativeSlice<byte> input;
+    //    [WriteOnly]
+    //    public NativeArray<byte> output;
+    //    // Params
+    //    [ReadOnly] 
+    //    public int px_stride;
+
+    //    // i is the iteration loop index
+    //    // In this case, it is the index of the output byte.
+    //    public void Execute( int i)
+    //    {
+    //        output[i] = input[i * px_stride];
+    //    }
+    //}
+
+    
+    // Cut image block for an individual camera from larger provided image.
+    //public byte[] get_raw_image(Camera_t cam, NativeArray<byte> raw, int numCams)
+    //{
+
+
+
+    //    // int num_bytes_to_copy = cam.channels * state.camWidth * state.camHeight;
+        
+    //    //Debug.Log(cam.channels);
+    //    //int num_bytes_to_copy = 3 * state.camWidth * state.camHeight;
+
+    //    byte[] output = new byte[num_bytes_to_copy];
+
+    //    // Reverse camera indexing since the camera output is globally flipped on the Y axis.
+    //    int outputIndex = numCams - 1 - cam.outputIndex;
+
+    //    // Figure out where camera data starts and ends
+    //    int y_start = outputIndex * state.camHeight;
+    //    int y_end = (outputIndex + 1) * state.camHeight;
+
+    //    // Calculate start and end byte
+    //    int byte_start = (y_start * state.screenWidth) * 3;
+    //    int byte_end = (y_end * state.screenWidth) * 3;
+
+
+    //    // Create a copy of the array
+    //    int px_stride = 4 - cam.channels;
+    //    for (int i = 0; i < num_bytes_to_copy; i++)
+    //    {
+    //        output[i] = raw[byte_start + i * px_stride];
+
+    //    }
+
+
+    //    return output;
+    //}
+
+
 
     // Reads a scene frame from the GPU backbuffer and sends it via ZMQ.
-    void sendFrameOnWire()
+    unsafe void sendFrameOnWire()
     {
         // Read pixels from screen backbuffer (expensive).
         rendered_frame.ReadPixels(new Rect(0, 0, state.screenWidth, state.screenHeight), 0, 0);
         rendered_frame.Apply(); // Might not actually be needed since only applies setpixel changes.
+
         byte[] raw = rendered_frame.GetRawTextureData();
+        
+        // Get metadata
+        RenderMetadata_t metadata = new RenderMetadata_t(state);
+
+        // Create packet metadata
+        var msg = new NetMQMessage();
+        msg.Append(JsonConvert.SerializeObject(metadata));
+
+        // Process each camera's image, compress the image, and serialize the result.
+        // Compression is disabled for now...
+        // Stride is also disabled for now. Outputs RGB blocks with stride 3.
+
+        state.cameras.ForEach(cam => {
+            // Length of RGB slice
+            int rgbImageLength = 3 * state.camWidth * state.camHeight;
+
+            // Reverse camera indexing since the camera output is globally flipped on the Y axis.
+            int outputIndex = state.numCameras - 1 - cam.outputIndex;
+
+            // Figure out where camera data starts and ends
+            int yStart = outputIndex * state.camHeight;
+            int yEnd = (outputIndex + 1) * state.camHeight;
+
+            // Calculate start and end byte
+            int byteStart = (yStart * state.screenWidth) * 3;
+            //int byte_end = (y_end * state.screenWidth) * 3;
+
+            // Get view of RGB camera image
+            //NativeSlice<byte> rgbImage = raw.Slice<byte>(byteStart, rgbImageLength);
 
 
-        // Compress and send the image in a different thread.
-        //Task.Run(() =>
-        //{
-            // Get metadata
-            RenderMetadata_t metadata = new RenderMetadata_t(state);
 
-            // Create packet metadata
-            var msg = new NetMQMessage();
-            msg.Append(JsonConvert.SerializeObject(metadata));
-
-            // Process each camera's image, compress the image, and serialize the result.
-            // Compression is disabled for now...
-            // Stride is also disabled for now. Outputs RGB blocks with stride 3.
-            List<byte[]> images = state.cameras.AsParallel().Select(cam => get_raw_image(cam, raw, metadata.cameraIDs.Count())).ToList();
-
-            // Append images to message
-            images.ForEach(image => msg.Append(image));
-            //Debug.Log(images.Count);
-
-            // Send the message.
-            //lock (socket_lock)
+            //Check if need to convert RGB image to grayscale @TODO
+            //if (cam.channels == 1)
             //{
-                push_socket.TrySendMultipartMessage(msg);
+            //    // Get single channels
+            //    NativeSlice<byte> redArray = rgbImage.SliceWithStride<byte>(0);
+            //    NativeSlice<byte> greenArray = rgbImage.SliceWithStride<byte>(1);
+            //    NativeSlice<byte> blueArray = rgbImage.SliceWithStride<byte>(2);
+            //    // Get output array
+            //    NativeArray<byte> grayscaleArray = new NativeArray<byte>(rgbImageLength / 3, Allocator.TempJob);
+            //    // Spawn conversion job
+            //    // @ TODO
+            //    convertToGrayscale(m_NativeRed, m_NativeGreen, m_NativeBlue, ref grayscaleConversionBurstJobHandle);
             //}
-        //});
+
+            // Append image to message
+            //byte[] imageData = rgbImage.ToArray();
+            //rgbImage.CopyTo(imageData);
+
+            byte[] imageData = new byte[rgbImageLength];
+            Array.Copy(raw, byteStart, imageData, 0, rgbImageLength);
+
+
+            //fixed (byte* pSource = &raw[0])
+            //{
+            //    var frame = new NetMQFrame(*(byte*)pSource, rgbImageLength);
+            //}
+            
+            msg.Append(imageData);
+            });
+
+            
+           push_socket.TrySendMultipartMessage(msg);
+
     }
 
     /* ==================================
