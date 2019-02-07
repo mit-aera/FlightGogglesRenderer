@@ -1,0 +1,59 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+using UnityEditor;
+using System.IO;
+
+public class printLandmarkLocations : MonoBehaviour
+{
+    
+
+    // Start is called before the first frame update
+    void Start()
+    {
+
+        Dictionary<string, List<GameObject>> GateMarkers = new Dictionary<string, List<GameObject>>();
+
+
+        // Find all landmarks and print to file.
+        foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers"))
+        {
+            // Tag the landmarks
+            string gateName = obj.transform.parent.parent.name;
+            string landmarkID = obj.name;
+
+            // Check if gate already exists.
+            if (GateMarkers.ContainsKey(gateName)){
+                GateMarkers[gateName].Add(obj);
+            } else {
+                List<GameObject> markerList = new List<GameObject>();
+                markerList.Add(obj);
+                GateMarkers.Add(gateName, markerList);
+            }
+        }
+
+        // Print results
+        //Write some text to the test.txt file
+        StreamWriter writer = new StreamWriter("Assets/Resources/markerLocations.txt", false);
+        foreach (var pair in GateMarkers)
+        {
+            writer.WriteLine(pair.Key);
+            foreach (GameObject marker in pair.Value)
+            {
+                writer.WriteLine(marker.transform.position);
+            }
+
+        }
+        writer.Close();
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+
+}
