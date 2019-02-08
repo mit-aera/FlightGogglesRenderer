@@ -38,15 +38,29 @@ public class printLandmarkLocations : MonoBehaviour
         StreamWriter writer = new StreamWriter("Assets/Resources/markerLocations.txt", false);
         foreach (var pair in GateMarkers)
         {
-            writer.WriteLine(pair.Key);
+            writer.WriteLine(pair.Key + ":");
+            writer.Write("  location: [");
+
+            int i = 0;
             foreach (GameObject marker in pair.Value)
             {
+
                 // Convert vector from EUN to NWU.
                 Vector3 NWU = new Vector3(marker.transform.position.z, -marker.transform.position.x, marker.transform.position.y);
 
-                writer.WriteLine(NWU);
-            }
+                // Print out locations in yaml format.
 
+                writer.Write("["+ NWU.x + ", " + NWU.y + ", " + NWU.z + "]");
+                if (i < 3)
+                {
+                    writer.Write(", ");
+                } else
+                {
+                    writer.WriteLine("]");
+                }
+                i++;
+            }
+            
         }
         writer.Close();
 
