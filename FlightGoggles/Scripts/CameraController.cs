@@ -549,6 +549,9 @@ public class CameraController : MonoBehaviour
             Camera castingCamera = internal_object_state.gameObj.GetComponent<Camera>();
             Vector3 cameraPosition = internal_object_state.gameObj.transform.position;
 
+            // Get camera collider
+            Collider cameraCollider = internal_object_state.gameObj.GetComponent<Collider>();
+
             // Cull landmarks based on camera frustrum
             // Gives lookup table of screen positions.
             Dictionary<string, Vector3> visibleLandmarkScreenPositions = new Dictionary<string, Vector3>();
@@ -595,7 +598,6 @@ public class CameraController : MonoBehaviour
                 // Check collisions. NOTE: indexing is via N*max_hits with first null being end of hit list.
                 RaycastHit batchedHit = results[j];
                 if (batchedHit.collider == null)
-                //if (true)
                 {
                     // No collisions here. Add it to the current state.
                     var landmark = visibleLandmarkScreenPosList[j];
@@ -605,7 +607,17 @@ public class CameraController : MonoBehaviour
                     landmarkScreenPosObject.position = Vector3ToList(landmark.Value);
                     state.landmarksInView.Add(landmarkScreenPosObject);
 
+                } else if (batchedHit.collider == cameraCollider)
+                {
+                    // No collisions here. Add it to the current state.
+                    var landmark = visibleLandmarkScreenPosList[j];
+                    Landmark_t landmarkScreenPosObject = new Landmark_t();
+
+                    landmarkScreenPosObject.ID = landmark.Key;
+                    landmarkScreenPosObject.position = Vector3ToList(landmark.Value);
+                    state.landmarksInView.Add(landmarkScreenPosObject);
                 }
+                
             }
 
             results.Dispose();

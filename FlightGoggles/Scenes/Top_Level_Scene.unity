@@ -299,7 +299,7 @@ PrefabInstance:
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
       propertyPath: client_ip
-      value: 192.168.2.1
+      value: 127.0.0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3d374c37885fb074d93f8b9bb965164c, type: 3}
