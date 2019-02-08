@@ -41,7 +41,10 @@ public class printLandmarkLocations : MonoBehaviour
             writer.WriteLine(pair.Key);
             foreach (GameObject marker in pair.Value)
             {
-                writer.WriteLine(marker.transform.position);
+                // Convert vector from EUN to NWU.
+                Vector3 NWU = new Vector3(marker.transform.position.z, -marker.transform.position.x, marker.transform.position.y);
+
+                writer.WriteLine(NWU);
             }
 
         }
