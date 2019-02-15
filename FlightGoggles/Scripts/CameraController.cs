@@ -21,9 +21,6 @@ using UnityEngine.UI;
 using System.Threading;
 using System.Threading.Tasks;
 
-// Allow for fast & unsafe operations
-using Unity.Collections.LowLevel.Unsafe;
-
 // Array ops
 using System.Linq;
 
@@ -37,6 +34,8 @@ using Newtonsoft.Json;
 using MessageSpec;
 using Unity.Collections;
 using Unity.Jobs;
+using System.IO;
+using UnityEditor;
 
 // Include postprocessing
 //using UnityEngine.PostProcessing;
@@ -728,7 +727,7 @@ public class CameraController : MonoBehaviour
         );
 
         // Check if should load obstacle perturbation file.
-        if (obstacle_perturbation_file.Length() > 0) {
+        if (obstacle_perturbation_file.Length > 0) {
             using (var reader = new StreamReader(obstacle_perturbation_file)) {
                 while (reader.Peek() >= 0) {
                     // Read line
@@ -736,17 +735,31 @@ public class CameraController : MonoBehaviour
                     str = reader.ReadLine();
 
                     // Parse line
-                    string objectName = str.split(':')[0];
-                    string translationString = str.split(':')[1];
-                    float[] translationsFloat = Array.ConvertAll(translationString.split(','), Double.Parse);
+                    string objectName = str.Split(':')[0];
+                    string translationString = str.Split(':')[1];
+                    float[] translationsFloat = Array.ConvertAll(translationString.Split(','), float.Parse);
 
                     // Find object
-                    foreach (GameObject obj in GameObject.FindGameObjectsWithName(objectName)){
-                        // Translate and rotate object
-                        obj.transform.Translate(-translationsFloat[1], 0, translationsFloat[0], Space.World);
-                        obj.transform.Rotate(0,0,translationsFloat[2], Space.World);
-                    }
+                    GameObject obj = GameObject.Find(objectName);
+                    if (obj != null)
+                    {
+                        //// Check if object is statically batched. (NOT AVAILABLE IN STANDALONE BUILD)
+                        //int flags = (int)GameObjectUtility.GetStaticEditorFlags(obj);
+                        //if ((flags & 4)!= 0)
+                        //{
+                        //    // Gameobject is not movable!!!
+                        //    Debug.LogError("WARNING: " + objectName + " is statically batched and not movable! Make sure the gameobject is only lightmap static.");
+                        //} else
+                        //{
+                            // Translate and rotate object
+                            obj.transform.Translate(-translationsFloat[1], 0, translationsFloat[0], Space.World);
+                            obj.transform.Rotate(0, translationsFloat[2], 0, Space.World);
 
+                        //}
+
+
+
+                    }
                 }
 
             }
@@ -947,7 +960,7 @@ public class CameraController : MonoBehaviour
 
 
     // Reads a scene frame from the GPU backbuffer and sends it via ZMQ.
-    unsafe void sendFrameOnWire()
+    void sendFrameOnWire()
     {
         // Read pixels from screen backbuffer (expensive).
         rendered_frame.ReadPixels(new Rect(0, 0, state.screenWidth, state.screenHeight), 0, 0);
