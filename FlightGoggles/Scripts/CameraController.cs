@@ -68,6 +68,7 @@ public class CameraController : MonoBehaviour
 
     // Public Parameters
     public string client_ip = client_ip_default;
+    public string obstacle_perturbation_file = "";
     public int max_num_ray_collisions = 1;
     
     public bool DEBUG = false;
@@ -127,7 +128,10 @@ public class CameraController : MonoBehaviour
             {
                 ConnectToClient(client_ip);
             }
-        
+
+            // Check if the program should use CLI arguments for IP.
+            obstacle_perturbation_file = GetArg("-obstacle-perturbation-file", "");
+            
             // Disable fullscreen.
             Screen.fullScreen = false;
             Screen.SetResolution(1024, 768, false);
@@ -722,6 +726,84 @@ public class CameraController : MonoBehaviour
                 //obj.transform.localScale = ListToVector3(obj_state.size);
             }
         );
+
+        // Check if should load obstacle perturbation file.
+        if (obstacle_perturbation_file.Length() > 0) {
+            using (var reader = new StreamReader(obstacle_perturbation_file)) {
+                while (reader.Peek() >= 0) {
+                    // Read line
+                    string str;
+                    str = reader.ReadLine();
+
+                    // Parse line
+                    string objectName = str.split(':')[0];
+                    string translationString = str.split(':')[1];
+                    float[] translationsFloat = Array.ConvertAll(translationString.split(','), Double.Parse);
+
+                    // Find object
+                    foreach (GameObject obj in GameObject.FindGameObjectsWithName(objectName)){
+                        // Translate and rotate object
+                        obj.transform.Translate(-translationsFloat[1], 0, translationsFloat[0], Space.World);
+                        obj.transform.Rotate(0,0,translationsFloat[2], Space.World);
+                    }
+
+                }
+
+            }
+
+        }
+
+        // Output current locations.
+        Dictionary<string, List<GameObject>> GateMarkers = new Dictionary<string, List<GameObject>>();
+
+        // Find all landmarks and print to file.
+        foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers"))
+        {
+            // Tag the landmarks
+            string gateName = obj.transform.parent.parent.name;
+            string landmarkID = obj.name;
+
+            // Check if gate already exists.
+            if (GateMarkers.ContainsKey(gateName)){
+                GateMarkers[gateName].Add(obj);
+            } else {
+                List<GameObject> markerList = new List<GameObject>();
+                markerList.Add(obj);
+                GateMarkers.Add(gateName, markerList);
+            }
+        }
+
+        // Print results
+        //Write some text to the test.txt file
+        StreamWriter writer = new StreamWriter("markerLocations.yaml", false);
+        foreach (var pair in GateMarkers)
+        {
+            writer.WriteLine(pair.Key + ":");
+            writer.Write("  location: [");
+
+            int i = 0;
+            foreach (GameObject marker in pair.Value)
+            {
+
+                // Convert vector from EUN to NWU.
+                Vector3 NWU = new Vector3(marker.transform.position.z, -marker.transform.position.x, marker.transform.position.y);
+
+                // Print out locations in yaml format.
+
+                writer.Write("["+ NWU.x + ", " + NWU.y + ", " + NWU.z + "]");
+                if (i < 3)
+                {
+                    writer.Write(", ");
+                } else
+                {
+                    writer.WriteLine("]");
+                }
+                i++;
+            }
+            
+        }
+        writer.Close();
+        
     }
 
     void instantiateCameras(){
