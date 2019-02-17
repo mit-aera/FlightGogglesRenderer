@@ -107,6 +107,8 @@ public class CameraController : MonoBehaviour
         // Get application version
         flight_goggles_version = Application.version;
 
+        Debug.Log("FlightGoggles version: " + flight_goggles_version);
+
         // Fixes for Unity/NetMQ conflict stupidity.
         AsyncIO.ForceDotNet.Force();
         socket_lock = new object();
@@ -474,13 +476,33 @@ public class CameraController : MonoBehaviour
     {
         if (internal_state.readyToRender){
             // Update camera positions
+
+            Vector3 uav_center_of_mass = new Vector3();
+
             foreach (Camera_t obj_state in state.cameras)
             {
                 // Get camera game object 
                 GameObject obj = internal_state.getGameobject(obj_state.ID, camera_template);
                 // Apply translation and rotation
-                obj.transform.SetPositionAndRotation(ListToVector3(obj_state.position), ListToQuaternion(obj_state.rotation));
+                Vector3 pos = ListToVector3(obj_state.position);
+                obj.transform.SetPositionAndRotation(pos, ListToQuaternion(obj_state.rotation));
+
+                // Calculate center of mass
+                uav_center_of_mass += pos;
+
             }
+
+            // Adjust camera colliders such that camera colliders are at the center of mass.
+            uav_center_of_mass /= state.numCameras;
+
+            // Get camera to cast from
+            ObjectState_t internal_object_state = internal_state.getWrapperObject(state.cameras[0].ID, camera_template);
+            
+            // Get camera collider
+            Collider cameraCollider = internal_object_state.gameObj.GetComponent<Collider>();
+            // Set collider global pos to center of mass.
+            cameraCollider.transform.position = uav_center_of_mass;
+
 
             // Update Window positions
             foreach (Object_t obj_state in state.objects)
@@ -698,6 +720,17 @@ public class CameraController : MonoBehaviour
             c.enabled = true;
         }
 
+        // Disable unneeded camera colliders
+        var nonRaycastingCameras = state.cameras.Where(obj => !obj.hasCollisionCheck);
+        foreach (Camera_t obj_state in nonRaycastingCameras){
+
+            ObjectState_t internal_object_state = internal_state.getWrapperObject(obj_state.ID, camera_template);
+
+            // Get camera collider
+            Collider cameraCollider = internal_object_state.gameObj.GetComponent<Collider>();
+            cameraCollider.enabled = false;
+        }
+
         // Find all landmarks in scene
         foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers")){
             // Tag the landmarks
@@ -712,6 +745,8 @@ public class CameraController : MonoBehaviour
                 Debug.LogWarning("Landmark ID " + landmarkID + " already exists!");
             }
         }
+
+        
     }
 
     void instantiateObjects(){

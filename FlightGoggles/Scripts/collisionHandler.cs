@@ -22,4 +22,14 @@ public class collisionHandler : MonoBehaviour
     {
         hasCollided = true;
     }
+
+    private void OnTriggerStay(Collider collision)
+    {
+        hasCollided = true;
+    }
+
+    private void OnTriggerExit(Collider collision)
+    {
+        hasCollided = false;
+    }
 }
