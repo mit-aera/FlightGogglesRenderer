@@ -71,6 +71,7 @@ public class CameraController : MonoBehaviour
     public int max_num_ray_collisions = 1;
     
     public bool DEBUG = false;
+    public bool outputLandmarkLocations = false;
     public GameObject camera_template;
     public GameObject splashScreen;
 
@@ -577,7 +578,7 @@ public class CameraController : MonoBehaviour
             var commands = new NativeArray<RaycastCommand>(numLandmarksInView, Allocator.TempJob);
 
             int i = 0;
-            var visibleLandmarkScreenPosList = visibleLandmarkScreenPositions.OrderBy(kvp => kvp.Key).ToArray();
+            var visibleLandmarkScreenPosList = visibleLandmarkScreenPositions.ToArray();
             foreach (var elm in visibleLandmarkScreenPosList)
             {
                 var landmark = internal_state.landmarkObjects[elm.Key];
@@ -765,57 +766,63 @@ public class CameraController : MonoBehaviour
             }
 
         }
-
-        // Output current locations.
-        Dictionary<string, List<GameObject>> GateMarkers = new Dictionary<string, List<GameObject>>();
-
-        // Find all landmarks and print to file.
-        foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers"))
+        if (outputLandmarkLocations)
         {
-            // Tag the landmarks
-            string gateName = obj.transform.parent.parent.name;
-            string landmarkID = obj.name;
+            // Output current locations.
+            Dictionary<string, List<GameObject>> GateMarkers = new Dictionary<string, List<GameObject>>();
 
-            // Check if gate already exists.
-            if (GateMarkers.ContainsKey(gateName)){
-                GateMarkers[gateName].Add(obj);
-            } else {
-                List<GameObject> markerList = new List<GameObject>();
-                markerList.Add(obj);
-                GateMarkers.Add(gateName, markerList);
-            }
-        }
-
-        // Print results
-        //Write some text to the test.txt file
-        StreamWriter writer = new StreamWriter("markerLocations.yaml", false);
-        foreach (var pair in GateMarkers)
-        {
-            writer.WriteLine(pair.Key + ":");
-            writer.Write("  location: [");
-
-            int i = 0;
-            foreach (GameObject marker in pair.Value)
+            // Find all landmarks and print to file.
+            foreach (GameObject obj in GameObject.FindGameObjectsWithTag("IR_Markers"))
             {
+                // Tag the landmarks
+                string gateName = obj.transform.parent.parent.name;
+                string landmarkID = obj.name;
 
-                // Convert vector from EUN to NWU.
-                Vector3 NWU = new Vector3(marker.transform.position.z, -marker.transform.position.x, marker.transform.position.y);
-
-                // Print out locations in yaml format.
-
-                writer.Write("["+ NWU.x + ", " + NWU.y + ", " + NWU.z + "]");
-                if (i < 3)
+                // Check if gate already exists.
+                if (GateMarkers.ContainsKey(gateName))
                 {
-                    writer.Write(", ");
-                } else
-                {
-                    writer.WriteLine("]");
+                    GateMarkers[gateName].Add(obj);
                 }
-                i++;
+                else
+                {
+                    List<GameObject> markerList = new List<GameObject>();
+                    markerList.Add(obj);
+                    GateMarkers.Add(gateName, markerList);
+                }
             }
-            
+
+            // Print results
+            //Write some text to the test.txt file
+            StreamWriter writer = new StreamWriter("markerLocations.yaml", false);
+            foreach (var pair in GateMarkers)
+            {
+                writer.WriteLine(pair.Key + ":");
+                writer.Write("  location: [");
+
+                int i = 0;
+                foreach (GameObject marker in pair.Value)
+                {
+
+                    // Convert vector from EUN to NWU.
+                    Vector3 NWU = new Vector3(marker.transform.position.z, -marker.transform.position.x, marker.transform.position.y);
+
+                    // Print out locations in yaml format.
+
+                    writer.Write("[" + NWU.x + ", " + NWU.y + ", " + NWU.z + "]");
+                    if (i < 3)
+                    {
+                        writer.Write(", ");
+                    }
+                    else
+                    {
+                        writer.WriteLine("]");
+                    }
+                    i++;
+                }
+
+            }
+            writer.Close();
         }
-        writer.Close();
         
     }
 

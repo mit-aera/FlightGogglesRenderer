@@ -109,15 +109,15 @@ MonoBehaviour:
   temporalAntialiasing:
     jitterSpread: 0.75
     sharpness: 0.25
-    stationaryBlending: 0.95
-    motionBlending: 0.85
+    stationaryBlending: 0.85
+    motionBlending: 0.65
   subpixelMorphologicalAntialiasing:
     quality: 2
   fastApproximateAntialiasing:
     fastMode: 0
     keepAlpha: 0
   fog:
-    enabled: 1
+    enabled: 0
     excludeSkybox: 1
   debugLayer:
     lightMeter:
