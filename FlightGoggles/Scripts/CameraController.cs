@@ -293,6 +293,8 @@ public class CameraController : MonoBehaviour
             updateCameraCollisions();
             // Run landmark visibility checks
             updateLandmarkVisibility();
+            // Compute sensor data
+            updateLidarData();
 
             // Mark socket as initialized
             socket_initialized = true;
@@ -477,7 +479,7 @@ public class CameraController : MonoBehaviour
         if (internal_state.readyToRender){
             // Update camera positions
 
-            Vector3 uav_center_of_mass = new Vector3();
+            internal_state.uavCenterOfMass = new Vector3();
 
             foreach (Camera_t obj_state in state.cameras)
             {
@@ -488,12 +490,12 @@ public class CameraController : MonoBehaviour
                 obj.transform.SetPositionAndRotation(pos, ListToQuaternion(obj_state.rotation));
 
                 // Calculate center of mass
-                uav_center_of_mass += pos;
+                internal_state.uavCenterOfMass += pos;
 
             }
 
             // Adjust camera colliders such that camera colliders are at the center of mass.
-            uav_center_of_mass /= state.numCameras;
+            internal_state.uavCenterOfMass /= state.numCameras;
 
             // Get camera to cast from
             ObjectState_t internal_object_state = internal_state.getWrapperObject(state.cameras[0].ID, camera_template);
@@ -501,7 +503,7 @@ public class CameraController : MonoBehaviour
             // Get camera collider
             Collider cameraCollider = internal_object_state.gameObj.GetComponent<Collider>();
             // Set collider global pos to center of mass.
-            cameraCollider.transform.position = uav_center_of_mass;
+            cameraCollider.transform.position = internal_state.uavCenterOfMass;
 
 
             // Update Window positions
@@ -648,6 +650,36 @@ public class CameraController : MonoBehaviour
 
             results.Dispose();
             commands.Dispose();
+        }
+    }
+
+
+    // Update Lidar data
+    void updateLidarData()
+    {
+        if (internal_state.readyToRender)
+        {
+            // Find direction and origin of raytrace for LIDAR. 
+            // In Unity, all objects are Y-UP. Therefore, a downward pointing lidar will be pointing along -Y in camera frame.
+            Vector3 raycastDirection =  ListToQuaternion(state.cameras[0].rotation) * new Vector3(0, -1, 0);
+
+            // Print direction for debug
+            // Debug.DrawRay(internal_state.uavCenterOfMass, raycastDirection);
+
+            // Run the raytrace
+            RaycastHit lidarHit;
+            float maxLidarDistance = 20;
+            bool hasHit = Physics.Raycast(internal_state.uavCenterOfMass, raycastDirection, out lidarHit, maxLidarDistance);
+
+            // Check if collision is valid??
+
+            // Get distance
+            float raycastDistance = hasHit ? lidarHit.distance : maxLidarDistance;
+
+
+            // Save the result of the raycast.
+            state.lidarReturn = raycastDistance;
+            // Debug.DrawLine(internal_state.uavCenterOfMass, internal_state.uavCenterOfMass + raycastDirection * raycastDistance);
         }
     }
 

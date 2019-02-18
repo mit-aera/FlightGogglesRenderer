@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6225320917194174838}
   - component: {fileID: 1407166897770408615}
   - component: {fileID: 873113812}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: HD_Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -256,4 +256,4 @@ Rigidbody:
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 3
