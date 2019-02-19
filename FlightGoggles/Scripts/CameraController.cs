@@ -671,11 +671,8 @@ public class CameraController : MonoBehaviour
             float maxLidarDistance = 20;
             bool hasHit = Physics.Raycast(internal_state.uavCenterOfMass, raycastDirection, out lidarHit, maxLidarDistance);
 
-            // Check if collision is valid??
-
-            // Get distance
-            float raycastDistance = hasHit ? lidarHit.distance : maxLidarDistance;
-
+            // Get distance. Return max+1 if out of range
+            float raycastDistance = hasHit ? lidarHit.distance : maxLidarDistance+1;
 
             // Save the result of the raycast.
             state.lidarReturn = raycastDistance;
