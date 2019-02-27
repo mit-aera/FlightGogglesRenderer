@@ -13,7 +13,7 @@ public class linuxObjectDisabler : MonoBehaviour
         // Check runtime OS
         if (Application.platform == RuntimePlatform.LinuxPlayer){
             // Disable this object.
-            this.gameObject.enabled = false;
+            this.gameObject.SetActive(false);
         }
     }
 

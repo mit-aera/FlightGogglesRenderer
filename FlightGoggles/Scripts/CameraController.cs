@@ -57,7 +57,7 @@ public class CameraController : MonoBehaviour
     [HideInInspector]
     public const int video_client_default_port = 10254;
     [HideInInspector]
-    public const int port_instance_offset = 0;
+    public int port_instance_offset = 0;
     [HideInInspector]
     public const string client_ip_default = "127.0.0.1";
     [HideInInspector]
@@ -126,7 +126,7 @@ public class CameraController : MonoBehaviour
 
             // Check if FlightGoggles should change its connection ports (for parallel operation)
             // Check if the program should use CLI arguments for IP.
-            port_instance_offset = Int( GetArg("-instance-idx", "0") ) * 2;
+            port_instance_offset = Int32.Parse( GetArg("-instance-idx", "0") ) * 2;
 
 
             // Check if the program should use CLI arguments for IP.
@@ -215,8 +215,8 @@ public class CameraController : MonoBehaviour
 
         Debug.Log("Trying to connect to: " + inputIPString);
 
-        string pose_host_address = "tcp://" + inputIPString + ":" + (pose_client_default_port + port_instance_offset).T0ng();
-        string video_host_address = "tcp://" + inputIPString + ":" + (video_client_default_port +  port_instance_offset).T0ng();
+        string pose_host_address = "tcp://" + inputIPString + ":" + (pose_client_default_port + port_instance_offset).ToString();
+        string video_host_address = "tcp://" + inputIPString + ":" + (video_client_default_port +  port_instance_offset).ToString();
         
         // Close ZMQ sockets
         pull_socket.Close();
