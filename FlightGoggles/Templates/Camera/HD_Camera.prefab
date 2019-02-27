@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6225320917194174838}
   - component: {fileID: 1407166897770408615}
   - component: {fileID: 873113812}
+  - component: {fileID: 2752642898835172207}
   m_Layer: 2
   m_Name: HD_Camera
   m_TagString: MainCamera
@@ -257,3 +258,12 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 3
+--- !u!1542919678 &2752642898835172207
+StreamingController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060161435559445602}
+  m_Enabled: 1
+  m_StreamingMipmapBias: 0

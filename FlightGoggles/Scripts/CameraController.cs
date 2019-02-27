@@ -775,7 +775,11 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        
+        //UNload unused assets
+        Resources.UnloadUnusedAssets();
+
+
+
     }
 
     void instantiateObjects(){
@@ -863,8 +867,12 @@ public class CameraController : MonoBehaviour
                 writer.WriteLine(pair.Key + ":");
                 writer.Write("  location: [");
 
+                
+
+
                 int i = 0;
-                foreach (GameObject marker in pair.Value)
+                // Sort landmark IDs
+                foreach (GameObject marker in pair.Value.OrderBy(gobj=>gobj.name).ToList())
                 {
 
                     // Convert vector from EUN to NWU.

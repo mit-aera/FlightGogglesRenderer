@@ -11,9 +11,19 @@ public class realtimeProbeDisabler : MonoBehaviour
     void Start()
     {
         // Check if realtime reflection probes are disabled.
-        if (!QualitySettings.realtimeReflectionProbes){
+        // Quality levels:
+        // - VeryLow                            (0)
+        // - Low                                (1)
+        // - Medium                             (2)
+        // - High - realtime reflection probes  (3)
+        // - Ultra - realtime reflection probes (4)
+
+        Debug.Log("Using quality level: " + QualitySettings.GetQualityLevel().ToString());
+
+        if (QualitySettings.GetQualityLevel() <= 2){
+            Debug.Log("Disabling realtime reflection probes.");
             // Disable this realtime probe.
-            this.gameObject.enabled = false;
+            this.gameObject.SetActive(false);
         }
     }
 
