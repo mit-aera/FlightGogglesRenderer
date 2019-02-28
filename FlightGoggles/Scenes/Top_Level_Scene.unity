@@ -289,7 +289,7 @@ PrefabInstance:
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
       propertyPath: defaultSceneName
-      value: Abandoned Factory
+      value: Abandoned Factory_Morning
       objectReference: {fileID: 0}
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
@@ -309,7 +309,7 @@ PrefabInstance:
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
       propertyPath: outputLandmarkLocations
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3d374c37885fb074d93f8b9bb965164c, type: 3}

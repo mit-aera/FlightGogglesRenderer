@@ -12,6 +12,7 @@ public class linuxObjectDisabler : MonoBehaviour
     {
         // Check runtime OS
         if (Application.platform == RuntimePlatform.LinuxPlayer){
+            Debug.Log("Disabling baked reflection probes in linux.");
             // Disable this object.
             this.gameObject.SetActive(false);
         }

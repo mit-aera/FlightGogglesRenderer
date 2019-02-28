@@ -57,7 +57,9 @@ public class CameraController : MonoBehaviour
     [HideInInspector]
     public const int video_client_default_port = 10254;
     [HideInInspector]
-    public int port_instance_offset = 0;
+    public int pose_client_port = 10253;
+    [HideInInspector]
+    public int video_client_port = 10254;
     [HideInInspector]
     public const string client_ip_default = "127.0.0.1";
     [HideInInspector]
@@ -126,7 +128,8 @@ public class CameraController : MonoBehaviour
 
             // Check if FlightGoggles should change its connection ports (for parallel operation)
             // Check if the program should use CLI arguments for IP.
-            port_instance_offset = Int32.Parse( GetArg("-instance-idx", "0") ) * 2;
+            pose_client_port = Int32.Parse( GetArg("-input-port", "10253"));
+            video_client_port = Int32.Parse(GetArg("-output-port", "10254"));
 
 
             // Check if the program should use CLI arguments for IP.
@@ -215,8 +218,8 @@ public class CameraController : MonoBehaviour
 
         Debug.Log("Trying to connect to: " + inputIPString);
 
-        string pose_host_address = "tcp://" + inputIPString + ":" + (pose_client_default_port + port_instance_offset).ToString();
-        string video_host_address = "tcp://" + inputIPString + ":" + (video_client_default_port +  port_instance_offset).ToString();
+        string pose_host_address = "tcp://" + inputIPString + ":" + pose_client_port.ToString();
+        string video_host_address = "tcp://" + inputIPString + ":" + video_client_port.ToString();
         
         // Close ZMQ sockets
         pull_socket.Close();
@@ -285,7 +288,9 @@ public class CameraController : MonoBehaviour
             // Check that we got the whole message
             if (new_msg.FrameCount >= msg.FrameCount) { msg = new_msg; }
 
-            if (msg.FrameCount == 0) { return; }
+            if (msg.FrameCount != 2) { return; }
+
+            if (msg[1].MessageSize < 10) { return; }
 
             // Get scene state from LCM
             state = JsonConvert.DeserializeObject<StateMessage_t>(msg[1].ConvertToString());
@@ -699,6 +704,8 @@ public class CameraController : MonoBehaviour
             // Load scene from internal scene selection
             // Get the scene name.
             string sceneName = (state.sceneIsDefault)? defaultSceneName : state.sceneFilename;
+            Debug.Log("Loading scene: " + sceneName);
+
             // Make sure that splashscreen is disabled
             // splashScreen.SetActive(false);
             // Load the scene. 
@@ -1116,8 +1123,11 @@ public class CameraController : MonoBehaviour
             msg.Append(imageData);
             });
 
-            
-           push_socket.TrySendMultipartMessage(msg);
+        if (push_socket.HasOut)
+        {
+            push_socket.TrySendMultipartMessage(msg);
+        }
+           
 
     }
 
