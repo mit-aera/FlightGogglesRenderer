@@ -516,7 +516,7 @@ public class CameraController : MonoBehaviour
             // Get camera collider
             SphereCollider cameraCollider = internal_object_state.gameObj.GetComponent<SphereCollider>();
             // Set collider global pos to center of mass.
-            cameraCollider.center = internal_state.uavCenterOfMass;
+            cameraCollider.center = internal_state.uavCenterOfMass - internal_object_state.gameObj.position;
 
 
             // Update Window positions
