@@ -203,13 +203,13 @@ public class CameraController : MonoBehaviour
         // Configure sockets
         Debug.Log("Configuring sockets.");
         pull_socket = new NetMQ.Sockets.SubscriberSocket();
-        pull_socket.Options.ReceiveHighWatermark = 6;
+        //pull_socket.Options.ReceiveHighWatermark = 6;
 
         // Setup subscriptions.
         pull_socket.Subscribe("Pose");
         push_socket = new NetMQ.Sockets.PublisherSocket();
         push_socket.Options.Linger = TimeSpan.Zero; // Do not keep unsent messages on hangup.
-        push_socket.Options.SendHighWatermark = 6; // Do not queue many images.
+        //push_socket.Options.SendHighWatermark = 6; // Do not queue many images.
        
     }
 
@@ -283,7 +283,7 @@ public class CameraController : MonoBehaviour
             }
 
             // Check if this is the latest message
-            while (pull_socket.TryReceiveMultipartMessage(ref new_msg)) ;
+            //while (pull_socket.TryReceiveMultipartMessage(ref new_msg)) ;
 
             // Check that we got the whole message
             if (new_msg.FrameCount >= msg.FrameCount) { msg = new_msg; }
@@ -316,7 +316,7 @@ public class CameraController : MonoBehaviour
         } else
         {
             // Throttle to 10hz when idle
-            Thread.Sleep(100); // [ms]
+            Thread.Sleep(3); // [ms]
         }
     }
 
@@ -522,10 +522,9 @@ public class CameraController : MonoBehaviour
             // Update Window positions
             foreach (Object_t obj_state in state.objects)
             {
-                
                 // Get game object 
                 GameObject obj = internal_state.getGameobject(obj_state.ID, obj_state.prefabID);
-                
+               
                 // Apply translation and rotation
                 obj.transform.SetPositionAndRotation(ListToVector3(obj_state.position), ListToQuaternion(obj_state.rotation));
 
@@ -791,7 +790,7 @@ public class CameraController : MonoBehaviour
         }
 
         //UNload unused assets
-        Resources.UnloadUnusedAssets();
+        //Resources.UnloadUnusedAssets();
 
 
 
@@ -1125,7 +1124,7 @@ public class CameraController : MonoBehaviour
 
         if (push_socket.HasOut)
         {
-            push_socket.TrySendMultipartMessage(msg);
+            push_socket.SendMultipartMessage(msg);
         }
            
 

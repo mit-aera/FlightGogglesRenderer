@@ -309,6 +309,11 @@ PrefabInstance:
     - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
         type: 3}
       propertyPath: outputLandmarkLocations
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114453131608665736, guid: 3d374c37885fb074d93f8b9bb965164c,
+        type: 3}
+      propertyPath: DEBUG
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -802,6 +807,8 @@ MonoBehaviour:
   renderSettingsUVPaddingMax: 0
   renderSettingsBeepOnFinish: 0
   renderSettingsExportTerrainAsHeightmap: 1
+  renderSettingsRTXMode: 0
+  renderSettingsLightProbeMode: 0
   lastBakeTime: 0
   enlightenWarningShown: 0
   enlightenWarningShown2: 0

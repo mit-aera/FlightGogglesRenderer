@@ -59,7 +59,7 @@ namespace MessageSpec
             return objects[ID];
         }
 
-        // Get gameobject from wrapper object
+       // Get gameobject from wrapper object
         public GameObject getGameobject(string ID, GameObject template)
         {
             return getWrapperObject(ID, template).gameObj;
